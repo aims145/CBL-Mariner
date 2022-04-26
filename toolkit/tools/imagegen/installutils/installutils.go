@@ -51,6 +51,50 @@ type PackageList struct {
 	Packages []string `json:"packages"`
 }
 
+// UpdatePackageRepo creates additional repo files specified by image configuration
+// and returns error if the operation fails
+func UpdatePackageRepo(config configuration.SystemConfig) (err error) {
+	
+	const (
+		repoFile = "/etc/yum.repos.d/mariner-iso.repo"
+		squashErrors = false
+	)
+	
+	if exists, ferr := file.PathExists(repoFile); ferr != nil {
+		logger.Log.Error("Error accessing repo file.")
+		err = ferr
+		return
+	} else if !exists {
+		logger.Log.Errorf("No repo file exists.")
+		return
+	}
+
+	// Loop through the PackageRepos field to determine if any customized package repos are specified.
+	// If specified, create new repo files for them and remove the default mariner-iso.repo
+	for _, packageRepo := range config.PackageRepos {
+		dstRepoPath := "/etc/yum.repos.d/mariner-" + packageRepo.Name + ".repo"
+		err = file.Copy(repoFile, dstRepoPath)
+		if err != nil {
+			logger.Log.Debugf("Failed to copy repo file %s to %s", repoFile, dstRepoPath)
+			return
+		}
+
+		// Update the name field
+		err = shell.ExecuteLive(squashErrors, "sed", "-i", fmt.Sprintf("s#name=Mariner Local Build Repo#name=%s#g", packageRepo.Name), dstRepoPath)
+		if err != nil {
+			return
+		}
+
+		// Update the base url field
+		err = shell.ExecuteLive(squashErrors, "sed", "-i", fmt.Sprintf("s#baseurl=file:///mnt/cdrom/RPMS#baseurl=%s#g", packageRepo.BaseUrl), dstRepoPath)
+		if err != nil {
+			return
+		}
+	} 
+
+	return
+}
+
 // GetRequiredPackagesForInstall returns the list of packages required for
 // the tooling to install an image
 func GetRequiredPackagesForInstall() []*pkgjson.PackageVer {
@@ -383,6 +427,7 @@ func PopulateInstallRoot(installChroot *safechroot.Chroot, packagesToInstall []s
 	ReportAction("Initializing RPM Database")
 
 	installRoot := filepath.Join(rootMountPoint, installChroot.RootDir())
+	logger.Log.Infof("Print install root: %s", installRoot)
 
 	// Initialize RPM Database so we can install RPMs into the installroot
 	err = initializeRpmDatabase(installRoot, diffDiskBuild)
@@ -927,6 +972,9 @@ func InstallGrubCfg(installRoot, rootDevice, bootUUID, bootPrefix string, encryp
 	if err != nil {
 		return
 	}
+
+	arr := []int{}
+	logger.Log.Infof("Print array: %d", arr[1])
 
 	// Add in bootUUID
 	err = setGrubCfgBootUUID(bootUUID, installGrubCfgFile)
