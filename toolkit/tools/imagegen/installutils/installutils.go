@@ -46,6 +46,12 @@ const (
 	shadowFile            = "/etc/shadow"
 )
 
+var (
+	// installedPackageRepoFile is a list of package repo files created during the installation process
+	// and need to be installed in the installed image
+	installedPackageRepoFiles = []string{}
+)
+
 // PackageList represents the list of packages to install into an image
 type PackageList struct {
 	Packages []string `json:"packages"`
@@ -90,7 +96,12 @@ func UpdatePackageRepo(config configuration.SystemConfig) (err error) {
 		if err != nil {
 			return
 		}
-	} 
+
+		// Check the repo file needs to be installed in the image
+		if packageRepo.Install {
+			installedPackageRepoFiles = append(installedPackageRepoFiles, dstRepoPath)
+		}
+	}
 
 	return
 }
@@ -500,6 +511,12 @@ func PopulateInstallRoot(installChroot *safechroot.Chroot, packagesToInstall []s
 		if err != nil {
 			return
 		}
+
+		 // Copy package repo files to installroot
+		err = addRepoFiles(installChroot.RootDir())
+		if err != nil {
+			return
+		}
 	}
 
 	// Add users
@@ -530,6 +547,18 @@ func PopulateInstallRoot(installChroot *safechroot.Chroot, packagesToInstall []s
 
 	// Run post-install scripts from within the installroot chroot
 	err = runPostInstallScripts(installChroot, config)
+	return
+}
+
+func addRepoFiles(installRoot string) (err error) {
+	for _, repoFile := range installedPackageRepoFiles {
+		installRepoFile := filepath.Join(installRoot, repoFile)
+		err = file.Copy(repoFile, installRepoFile)
+		if err != nil {
+			return
+		}
+	}
+	
 	return
 }
 
@@ -972,9 +1001,6 @@ func InstallGrubCfg(installRoot, rootDevice, bootUUID, bootPrefix string, encryp
 	if err != nil {
 		return
 	}
-
-	arr := []int{}
-	logger.Log.Infof("Print array: %d", arr[1])
 
 	// Add in bootUUID
 	err = setGrubCfgBootUUID(bootUUID, installGrubCfgFile)
