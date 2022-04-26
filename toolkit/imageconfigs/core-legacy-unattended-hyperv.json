@@ -48,6 +48,18 @@
                 "default": "kernel"
             },
             "Hostname": "cbl-mariner",
+            "PackageRepos" : [
+                {
+                    "Name": "cbl-mariner-official-base",
+                    "BaseUrl": "https://packages.microsoft.com/cbl-mariner/2.0/prod/base/x86_64",
+                    "Install": true
+                },
+                {
+                    "Name": "cbl-mariner-official-preview",
+                    "BaseUrl": "https://packages.microsoft.com/cbl-mariner/2.0/preview/base/x86_64",
+                    "Install": true
+                }
+            ],
             "Users": [
                 {
                     "Name": "root",
