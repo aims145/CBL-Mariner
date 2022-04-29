@@ -138,6 +138,15 @@ func (s *SystemConfig) IsValid() (err error) {
 		return fmt.Errorf("invalid [KernelCommandLine]: %w", err)
 	}
 
+	// Validate that PackageRepos do not contain duplicate package repo name
+	repoNames := make(map[string]bool)
+	for _, packageRepo := range s.PackageRepos {
+		if _, ok := repoNames[packageRepo.Name]; ok {
+			return fmt.Errorf("invalid [PackageRepos]: duplicate package repo names")
+		}
+		repoNames[packageRepo.Name] = true
+	}
+
 	//Validate PostInstallScripts
 	//Validate Groups
 	//Validate Users

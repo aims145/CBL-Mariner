@@ -25,6 +25,7 @@ import (
 	"microsoft.com/pkggen/internal/retry"
 	"microsoft.com/pkggen/internal/safechroot"
 	"microsoft.com/pkggen/internal/shell"
+	"microsoft.com/pkggen/internal/network"
 )
 
 const (
@@ -46,32 +47,26 @@ const (
 	shadowFile            = "/etc/shadow"
 )
 
-var (
-	// installedPackageRepoFile is a list of package repo files created during the installation process
-	// and need to be installed in the installed image
-	installedPackageRepoFiles = []string{}
-)
-
 // PackageList represents the list of packages to install into an image
 type PackageList struct {
 	Packages []string `json:"packages"`
 }
 
-// UpdatePackageRepo creates additional repo files specified by image configuration
+// updatePackageRepo creates additional repo files specified by image configuration
 // and returns error if the operation fails
-func UpdatePackageRepo(config configuration.SystemConfig) (err error) {
+func updatePackageRepo(installChroot *safechroot.Chroot, config configuration.SystemConfig) (err error) {
 	
 	const (
 		repoFile = "/etc/yum.repos.d/mariner-iso.repo"
 		squashErrors = false
 	)
-	
+
 	if exists, ferr := file.PathExists(repoFile); ferr != nil {
-		logger.Log.Error("Error accessing repo file.")
+		logger.Log.Errorf("Error accessing repo file.")
 		err = ferr
 		return
 	} else if !exists {
-		logger.Log.Errorf("No repo file exists.")
+		err = fmt.Errorf("/etc/yum.repos.d/mariner-iso.repo does not exist")
 		return
 	}
 
@@ -81,7 +76,13 @@ func UpdatePackageRepo(config configuration.SystemConfig) (err error) {
 		dstRepoPath := "/etc/yum.repos.d/mariner-" + packageRepo.Name + ".repo"
 		err = file.Copy(repoFile, dstRepoPath)
 		if err != nil {
-			logger.Log.Debugf("Failed to copy repo file %s to %s", repoFile, dstRepoPath)
+			logger.Log.Errorf("Failed to copy repo file %s to %s", repoFile, dstRepoPath)
+			return
+		}
+
+		// Update the identifer field
+		err = shell.ExecuteLive(squashErrors, "sed", "-i", fmt.Sprintf("s#mariner-local-repo#mariner-%s#g", packageRepo.Name), dstRepoPath)
+		if err != nil {
 			return
 		}
 
@@ -97,12 +98,25 @@ func UpdatePackageRepo(config configuration.SystemConfig) (err error) {
 			return
 		}
 
+		// Add metadata GPG key
+		err = shell.ExecuteLive(squashErrors, "sed", "-i", "s#MICROSOFT-RPM-GPG-KEY#& file:///etc/pki/rpm-gpg/MICROSOFT-METADATA-GPG-KEY#", dstRepoPath)
+		if err != nil {
+			return
+		}
+
 		// Check the repo file needs to be installed in the image
 		if packageRepo.Install {
-			installedPackageRepoFiles = append(installedPackageRepoFiles, dstRepoPath)
+			installRepoFile := filepath.Join(installChroot.RootDir(), dstRepoPath)
+			err = file.Copy(dstRepoPath, installRepoFile)
+			if err != nil {
+				return
+			}
 		}
 	}
 
+	// It is possible that network access may not be up at this point,
+	// so check network access 
+	err = network.CheckNetworkAccess()
 	return
 }
 
@@ -440,6 +454,13 @@ func PopulateInstallRoot(installChroot *safechroot.Chroot, packagesToInstall []s
 	installRoot := filepath.Join(rootMountPoint, installChroot.RootDir())
 	logger.Log.Infof("Print install root: %s", installRoot)
 
+	if !isRootFS {
+		err = updatePackageRepo(installChroot, config)
+		if err != nil {
+		 	return
+		}	
+	}
+
 	// Initialize RPM Database so we can install RPMs into the installroot
 	err = initializeRpmDatabase(installRoot, diffDiskBuild)
 	if err != nil {
@@ -511,12 +532,6 @@ func PopulateInstallRoot(installChroot *safechroot.Chroot, packagesToInstall []s
 		if err != nil {
 			return
 		}
-
-		 // Copy package repo files to installroot
-		err = addRepoFiles(installChroot.RootDir())
-		if err != nil {
-			return
-		}
 	}
 
 	// Add users
@@ -550,18 +565,6 @@ func PopulateInstallRoot(installChroot *safechroot.Chroot, packagesToInstall []s
 	return
 }
 
-func addRepoFiles(installRoot string) (err error) {
-	for _, repoFile := range installedPackageRepoFiles {
-		installRepoFile := filepath.Join(installRoot, repoFile)
-		err = file.Copy(repoFile, installRepoFile)
-		if err != nil {
-			return
-		}
-	}
-	
-	return
-}
-
 func generateContainerManifests(installChroot *safechroot.Chroot) {
 	installRoot := filepath.Join(rootMountPoint, installChroot.RootDir())
 	rpmDir := filepath.Join(installRoot, rpmDependenciesDirectory)
@@ -572,7 +575,7 @@ func generateContainerManifests(installChroot *safechroot.Chroot) {
 	os.MkdirAll(rpmManifestDir, os.ModePerm)
 
 	shell.ExecuteAndLogToFile(manifest1Path, "rpm", "--dbpath", rpmDir, "-qa")
-	shell.ExecuteAndLogToFile(manifest2Path, "rpm", "--dbpath", rpmDir, "-qa", "--qf", "%{NAME}\t%{VERSION}-%{RELEASE}\t%{INSTALLTIME}\t%{BUILDTIME}\n")
+	shell.ExecuteAndLogToFile(manifest2Path, "rpm", "--dbpath", rpmDir, "-qa", "--qf", "%{NAME}\t%{VERSION}-%{RELEASE}\t%{INSTALLTIME}\t%{BUILDTIME}\t%{VENDOR}\t(none)\t%{SIZE}\t%{ARCH}\t%{EPOCHNUM}\t%{SOURCERPM}\n")
 
 	return
 }
@@ -731,6 +734,10 @@ func calculateTotalPackages(packages []string, installRoot string) (totalPackage
 		// Issue an install request but stop right before actually performing the install (assumeno)
 		stdout, stderr, err = shell.Execute("tdnf", "install", "--assumeno", "--nogpgcheck", pkg, "--installroot", installRoot)
 		if err != nil {
+
+			logger.Log.Infof("Print package name: %s", pkg)
+			logger.Log.Infof("Print error: %s", stderr)
+
 			// tdnf aborts the process when it detects an install with --assumeno.
 			if stderr == tdnfAssumeNoStdErr {
 				err = nil

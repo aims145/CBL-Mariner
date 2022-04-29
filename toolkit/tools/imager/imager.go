@@ -476,10 +476,6 @@ func buildImage(mountPointMap, mountPointToFsTypeMap, mountPointToMountArgsMap m
 			return
 		}
 		defer installutils.DestroyInstallRoot(installRoot, installMap, mountPointToOverlayMap)
-		
-		// Update package repo
-		err = installutils.UpdatePackageRepo(systemConfig)
-		logger.PanicOnError(err, "Failed to update package repositories")
 	}
 
 	// Install any tools required for the setup root to function
