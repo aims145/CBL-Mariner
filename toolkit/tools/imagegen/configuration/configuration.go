@@ -45,16 +45,6 @@ type InstallScript struct {
 	Path string `json:"Path"`
 }
 
-// PackageRepo defines the RPM repo to pull packages from during the installation
-// or after the system is installed. The "Install" option indicates that the provided
-// repository configuration will be saved in the installed system if specified, and only
-// available during the installation process if not
-type PackageRepo struct {
-	Name    string `json:"Name"`
-	BaseUrl string `json:"BaseUrl"`
-	Install bool   `json:"Install"`
-}
-
 // Group defines a single group to be created on the new system.
 type Group struct {
 	Name string `json:"Name"`

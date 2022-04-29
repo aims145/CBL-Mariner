@@ -141,6 +141,10 @@ func (s *SystemConfig) IsValid() (err error) {
 	// Validate that PackageRepos do not contain duplicate package repo name
 	repoNames := make(map[string]bool)
 	for _, packageRepo := range s.PackageRepos {
+		if err = packageRepo.IsValid(); err != nil {
+			return fmt.Errorf("invalid [PackageRepo]: %w", err)
+		}
+
 		if _, ok := repoNames[packageRepo.Name]; ok {
 			return fmt.Errorf("invalid [PackageRepos]: duplicate package repo names")
 		}

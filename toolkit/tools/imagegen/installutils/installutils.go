@@ -71,7 +71,7 @@ func updatePackageRepo(installChroot *safechroot.Chroot, config configuration.Sy
 	}
 
 	// Loop through the PackageRepos field to determine if any customized package repos are specified.
-	// If specified, create new repo files for them and remove the default mariner-iso.repo
+	// If specified, create new repo files for them
 	for _, packageRepo := range config.PackageRepos {
 		dstRepoPath := "/etc/yum.repos.d/mariner-" + packageRepo.Name + ".repo"
 		err = file.Copy(repoFile, dstRepoPath)

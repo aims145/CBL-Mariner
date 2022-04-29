@@ -170,7 +170,7 @@ func TestShouldFailParsingBadKernelCommandLine_SystemConfig(t *testing.T) {
 	assert.Equal(t, "failed to parse [SystemConfig]: failed to parse [KernelCommandLine]: ExtraCommandLine contains character ` which is reserved for use by sed", err.Error())
 }
 
-func TestShouldFailParsingDuplicatePackageNames(t *testing.T) {
+func TestShouldFailParsingDuplicatePackageRepoNames(t *testing.T) {
 	var checkedSystemConfig SystemConfig
 
 	duplicateRepoNameConfig := validSystemConfig
