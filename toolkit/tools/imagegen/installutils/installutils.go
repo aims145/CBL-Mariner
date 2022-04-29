@@ -452,7 +452,6 @@ func PopulateInstallRoot(installChroot *safechroot.Chroot, packagesToInstall []s
 	ReportAction("Initializing RPM Database")
 
 	installRoot := filepath.Join(rootMountPoint, installChroot.RootDir())
-	logger.Log.Infof("Print install root: %s", installRoot)
 
 	if !isRootFS {
 		err = updatePackageRepo(installChroot, config)
@@ -734,10 +733,6 @@ func calculateTotalPackages(packages []string, installRoot string) (totalPackage
 		// Issue an install request but stop right before actually performing the install (assumeno)
 		stdout, stderr, err = shell.Execute("tdnf", "install", "--assumeno", "--nogpgcheck", pkg, "--installroot", installRoot)
 		if err != nil {
-
-			logger.Log.Infof("Print package name: %s", pkg)
-			logger.Log.Infof("Print error: %s", stderr)
-
 			// tdnf aborts the process when it detects an install with --assumeno.
 			if stderr == tdnfAssumeNoStdErr {
 				err = nil
