@@ -447,12 +447,12 @@ var expectedConfiguration Config = Config{
 			},
 			PackageRepos: []PackageRepo{
 				{
-					Name: "repo1",
+					Name:    "repo1",
 					BaseUrl: "https://repo1.com",
 					Install: false,
 				},
 				{
-					Name: "repo2",
+					Name:    "repo2",
 					BaseUrl: "https://repo2.com",
 					Install: false,
 				},

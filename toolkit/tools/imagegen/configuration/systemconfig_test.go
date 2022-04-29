@@ -185,7 +185,7 @@ func TestShouldFailParsingDuplicatePackageNames(t *testing.T) {
 
 	err = remarshalJSON(duplicateRepoNameConfig, &checkedSystemConfig)
 	assert.Error(t, err)
-	assert.Equal(t, "failed to parse [SystemConfig]: invalid [PackageRepos]: duplicate package repo names", err.Error()) 
+	assert.Equal(t, "failed to parse [SystemConfig]: invalid [PackageRepos]: duplicate package repo names", err.Error())
 }
 
 func TestShouldFailParsingBadUserUID_SystemConfig(t *testing.T) {

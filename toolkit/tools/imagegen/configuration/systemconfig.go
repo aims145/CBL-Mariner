@@ -27,7 +27,7 @@ type SystemConfig struct {
 	PartitionSettings  []PartitionSetting `json:"PartitionSettings"`
 	PreInstallScripts  []InstallScript    `json:"PreInstallScripts"`
 	PostInstallScripts []InstallScript    `json:"PostInstallScripts"`
-	PackageRepos	   []PackageRepo	  `json:"PackageRepos"`
+	PackageRepos       []PackageRepo      `json:"PackageRepos"`
 	Groups             []Group            `json:"Groups"`
 	Users              []User             `json:"Users"`
 	Encryption         RootEncryption     `json:"Encryption"`

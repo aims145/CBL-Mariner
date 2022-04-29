@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"microsoft.com/pkggen/internal/logger"
-	"microsoft.com/pkggen/internal/shell"
 	"microsoft.com/pkggen/internal/retry"
+	"microsoft.com/pkggen/internal/shell"
 )
 
 // JoinURL concatenates baseURL with extraPaths
@@ -70,7 +70,7 @@ func CheckNetworkAccess() error {
 	const (
 		retryAttempts = 10
 		retryDuration = time.Second
-		squashErrors = false
+		squashErrors  = false
 	)
 
 	err := retry.Run(func() error {

@@ -50,7 +50,7 @@ type InstallScript struct {
 // repository configuration will be saved in the installed system if specified, and only
 // available during the installation process if not
 type PackageRepo struct {
-	Name 	string `json:"Name"`
+	Name    string `json:"Name"`
 	BaseUrl string `json:"BaseUrl"`
 	Install bool   `json:"Install"`
 }

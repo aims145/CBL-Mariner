@@ -20,12 +20,12 @@ import (
 	"microsoft.com/pkggen/internal/file"
 	"microsoft.com/pkggen/internal/jsonutils"
 	"microsoft.com/pkggen/internal/logger"
+	"microsoft.com/pkggen/internal/network"
 	"microsoft.com/pkggen/internal/pkgjson"
 	"microsoft.com/pkggen/internal/randomization"
 	"microsoft.com/pkggen/internal/retry"
 	"microsoft.com/pkggen/internal/safechroot"
 	"microsoft.com/pkggen/internal/shell"
-	"microsoft.com/pkggen/internal/network"
 )
 
 const (
@@ -55,9 +55,9 @@ type PackageList struct {
 // updatePackageRepo creates additional repo files specified by image configuration
 // and returns error if the operation fails
 func updatePackageRepo(installChroot *safechroot.Chroot, config configuration.SystemConfig) (err error) {
-	
+
 	const (
-		repoFile = "/etc/yum.repos.d/mariner-iso.repo"
+		repoFile     = "/etc/yum.repos.d/mariner-iso.repo"
 		squashErrors = false
 	)
 
@@ -115,7 +115,7 @@ func updatePackageRepo(installChroot *safechroot.Chroot, config configuration.Sy
 	}
 
 	// It is possible that network access may not be up at this point,
-	// so check network access 
+	// so check network access
 	err = network.CheckNetworkAccess()
 	return
 }
@@ -456,8 +456,8 @@ func PopulateInstallRoot(installChroot *safechroot.Chroot, packagesToInstall []s
 	if !isRootFS {
 		err = updatePackageRepo(installChroot, config)
 		if err != nil {
-		 	return
-		}	
+			return
+		}
 	}
 
 	// Initialize RPM Database so we can install RPMs into the installroot
