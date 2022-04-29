@@ -8,8 +8,8 @@ package configuration
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"net/url"
+	"strings"
 )
 
 // PackageRepo defines the RPM repo to pull packages from during the installation
@@ -72,5 +72,5 @@ func (p *PackageRepo) RepoUrlIsValid() (err error) {
 	if err != nil {
 		return
 	}
-	return 
+	return
 }

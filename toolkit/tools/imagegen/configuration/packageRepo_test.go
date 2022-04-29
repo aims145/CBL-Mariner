@@ -14,14 +14,14 @@ import (
 var (
 	validPackageRepos = []PackageRepo{
 		{
-			Name: 		"mariner-official-base",
-			BaseUrl:	"https://packages.microsoft.com/cbl-mariner/2.0/prod/base/x86_64",
-			Install:	false,
+			Name:    "mariner-official-base",
+			BaseUrl: "https://packages.microsoft.com/cbl-mariner/2.0/prod/base/x86_64",
+			Install: false,
 		},
 		{
-			Name: 		"mariner-official-preview",
-			BaseUrl:	"https://packages.microsoft.com/cbl-mariner/2.0/preview/base/x86_64",
-			Install:	true,
+			Name:    "mariner-official-preview",
+			BaseUrl: "https://packages.microsoft.com/cbl-mariner/2.0/preview/base/x86_64",
+			Install: true,
 		},
 	}
 )
