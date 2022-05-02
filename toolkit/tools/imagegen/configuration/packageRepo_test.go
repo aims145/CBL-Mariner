@@ -15,12 +15,12 @@ var (
 	validPackageRepos = []PackageRepo{
 		{
 			Name:    "mariner-official-base",
-			BaseUrl: "https://packages.microsoft.com/cbl-mariner/2.0/prod/base/x86_64",
+			BaseUrl: "https://packages.microsoft.com/cbl-mariner/$releasever/prod/base/$basearch",
 			Install: false,
 		},
 		{
 			Name:    "mariner-official-preview",
-			BaseUrl: "https://packages.microsoft.com/cbl-mariner/2.0/preview/base/x86_64",
+			BaseUrl: "hhttps://packages.microsoft.com/cbl-mariner/$releasever/preview/base/$basearch",
 			Install: true,
 		},
 	}
